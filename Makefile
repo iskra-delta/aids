@@ -1,44 +1,41 @@
-CC := cc
-AR := ar
-ARFLAGS := rcs
+DOCKER_IMAGE ?= wischner/sdcc-z80-idp:latest
 
-SDL_CFLAGS := $(shell sdl2-config --cflags)
-SDL_LIBS := $(shell sdl2-config --libs)
+WORKDIR      := $(CURDIR)
+PROJECTS_DIR := $(abspath ..)
+PROJECT_NAME := $(notdir $(WORKDIR))
+UID          := $(shell id -u)
+GID          := $(shell id -g)
 
-CFLAGS := -std=c99 -Wall -Wextra -Werror $(SDL_CFLAGS)
+DOCKER_RUN = docker run --rm \
+	--user $(UID):$(GID) \
+	-v "$(PROJECTS_DIR):/workspace" \
+	-w "/workspace/$(PROJECT_NAME)" \
+	$(DOCKER_IMAGE)
 
-BUILD_DIR := build
-BIN_DIR := bin
-PLATFORM_OBJ := $(BUILD_DIR)/platform_sdl2.o
-GAME_OBJ := $(BUILD_DIR)/game.o
-MAIN_OBJ := $(BUILD_DIR)/main.o
-PLATFORM_LIB := $(BUILD_DIR)/libplatform.a
-TARGET := $(BIN_DIR)/asteroids
+DOCKER_RUN_ROOT = docker run --rm \
+	-v "$(PROJECTS_DIR):/workspace" \
+	-w "/workspace/$(PROJECT_NAME)" \
+	$(DOCKER_IMAGE)
 
-.PHONY: all clean run
+all:
+	@echo "[host] building libpartner dependency"
+	@$(MAKE) -C ../libpartner build
+	@echo "[host] building project inside docker"
+	@$(DOCKER_RUN) make -C src all
 
-all: $(TARGET)
+docker-pull:
+	@docker pull "$(DOCKER_IMAGE)"
 
-$(BUILD_DIR) $(BIN_DIR):
-	mkdir -p $@
-
-$(PLATFORM_OBJ): src/platform/platform_sdl2.c src/platform/platform.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(GAME_OBJ): src/game.c src/game.h src/platform/platform.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(MAIN_OBJ): src/main.c src/game.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(PLATFORM_LIB): $(PLATFORM_OBJ) | $(BUILD_DIR)
-	$(AR) $(ARFLAGS) $@ $<
-
-$(TARGET): $(MAIN_OBJ) $(GAME_OBJ) $(PLATFORM_LIB) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $(MAIN_OBJ) $(GAME_OBJ) -L$(BUILD_DIR) -lplatform $(SDL_LIBS) -o $@
-
-run: $(TARGET)
-	./$(TARGET)
+fix-perms:
+	@echo "[host] fixing ownership of build and bin outputs"
+	@$(DOCKER_RUN_ROOT) sh -lc 'chown -R $(UID):$(GID) build bin 2>/dev/null || true'
 
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR)
+	@echo "[host] removing build and bin outputs"
+	@rm -rf build bin 2>/dev/null || true
+	@if [ -e build ] || [ -e bin ]; then \
+		echo "[host] retrying cleanup through docker as root"; \
+		$(DOCKER_RUN_ROOT) sh -lc 'rm -rf build bin'; \
+	fi
+
+.PHONY: all clean docker-pull fix-perms
