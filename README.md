@@ -43,8 +43,15 @@ It is written in C for Z80/CP/M, uses UGPX graphics, and builds into both a
 ## Build
 
 The top-level build uses Docker so you do not need the full SDCC/UGPX toolchain
-installed on the host. During the build, the latest `idp-sdk` release is
-downloaded from GitHub and used for Partner headers and `libsdk.lib`.
+installed on the host. Before the Docker build starts, the latest `idp-sdk`
+release is downloaded into `.deps/idp-sdk/` and the project links against the
+full SDK runtime:
+
+- `crt0cpm3-z80.rel`
+- `libsdk.lib`
+- `libcpm3-z80.lib`
+- `libsdcc-z80.lib`
+- `ugpx.lib`
 
 ### Requirements
 
@@ -63,6 +70,8 @@ make docker-pull
 make clean
 make fix-perms
 ```
+
+The build uses the same SDK layout and link order as `../idp-pong`.
 
 ## Build Outputs
 
@@ -96,6 +105,7 @@ assets/bitmaps/       Reference artwork
 - The game runs in `1024x512` graphics mode.
 - The binary name is `kamenje` even though the repository directory is `aids`.
 - The build fetches the latest `idp-sdk` release from `iskra-delta/idp-sdk`.
+- SDK files are cached under `.deps/idp-sdk/current`.
 - The in-game strings are in Slovenian.
 - `REZULTAT` means score.
 - `VAL` means wave.
