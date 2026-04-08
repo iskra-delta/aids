@@ -43,20 +43,12 @@ It is written in C for Z80/CP/M, uses UGPX graphics, and builds into both a
 ## Build
 
 The top-level build uses Docker so you do not need the full SDCC/UGPX toolchain
-installed on the host.
+installed on the host. During the build, the latest `idp-sdk` release is
+downloaded from GitHub and used for Partner headers and `libsdk.lib`.
 
 ### Requirements
 
 - Docker
-- A sibling checkout of `libpartner` in the parent directory
-
-Expected directory layout:
-
-```text
-parent/
-├── aids/
-└── libpartner/
-```
 
 Build the game:
 
@@ -103,6 +95,7 @@ assets/bitmaps/       Reference artwork
 
 - The game runs in `1024x512` graphics mode.
 - The binary name is `kamenje` even though the repository directory is `aids`.
+- The build fetches the latest `idp-sdk` release from `iskra-delta/idp-sdk`.
 - The in-game strings are in Slovenian.
 - `REZULTAT` means score.
 - `VAL` means wave.

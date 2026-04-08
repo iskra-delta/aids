@@ -18,8 +18,6 @@ DOCKER_RUN_ROOT = docker run --rm \
 	$(DOCKER_IMAGE)
 
 all:
-	@echo "[host] building libpartner dependency"
-	@$(MAKE) -C ../libpartner build
 	@echo "[host] building project inside docker"
 	@$(DOCKER_RUN) make -C src all
 
