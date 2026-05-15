@@ -3,7 +3,6 @@ DOCKER_IMAGE ?= wischner/sdcc-z80-idp:latest
 WORKDIR      := $(CURDIR)
 PROJECTS_DIR := $(abspath ..)
 PROJECT_NAME := $(notdir $(WORKDIR))
-SDK_ROOT     := $(WORKDIR)/.deps/idp-sdk
 UID          := $(shell id -u)
 GID          := $(shell id -g)
 
@@ -19,8 +18,6 @@ DOCKER_RUN_ROOT = docker run --rm \
 	$(DOCKER_IMAGE)
 
 all:
-	@echo "[host] downloading latest idp-sdk release"
-	@./scripts/fetch_idp_sdk.sh "$(SDK_ROOT)"
 	@echo "[host] building project inside docker"
 	@$(DOCKER_RUN) make -C src all
 

@@ -12,16 +12,9 @@ AS      := sdasz80
 OBJCOPY := sdobjcopy
 
 UGPX_LIB := /opt/sdcc/share/sdcc/lib/z80/ugpx.lib
-SDK_DIR := ../.deps/idp-sdk/current
-SDK_CRT0 := $(SDK_DIR)/lib/crt0cpm3-z80.rel
-SDK_LIB := $(SDK_DIR)/lib/libsdk.lib
-SDK_CPM_LIB := $(SDK_DIR)/lib/libcpm3-z80.lib
-SDK_SDCC_LIB := $(SDK_DIR)/lib/libsdcc-z80.lib
 
-CFLAGS  := -mz80 --std-c11 --no-std-crt0 --nostdlib \
-	-I$(SDK_DIR)/include -I/opt/sdcc/share/sdcc/include/gpx
-LDFLAGS := -mz80 --std-c11 --no-std-crt0 --nostdlib \
-	--code-loc 0x100 --data-loc 0
+CFLAGS  := --std-c11 -I/opt/sdcc/share/sdcc/include/gpx
+LDFLAGS := --std-c11
 ASFLAGS := -xlos -g
 
 C_SRCS  := $(wildcard $(SRC_DIR)/*.c)
@@ -44,10 +37,10 @@ $(BUILD_DIR)/%.rel: $(SRC_DIR)/%.s
 	@echo "[as] $< -> $@"
 	@$(AS) $(ASFLAGS) -o $@ $<
 
-$(IHX): $(C_OBJS) $(S_OBJS) $(SDK_CRT0) $(UGPX_LIB) $(SDK_LIB) $(SDK_CPM_LIB) $(SDK_SDCC_LIB)
+$(IHX): $(C_OBJS) $(S_OBJS) $(UGPX_LIB)
 	@mkdir -p "$(BUILD_DIR)"
 	@echo "[link] $@"
-	@$(CC) $(LDFLAGS) -o $@ $(SDK_CRT0) $(C_OBJS) $(S_OBJS) $(UGPX_LIB) $(SDK_LIB) $(SDK_CPM_LIB) $(SDK_SDCC_LIB)
+	@$(CC) $(LDFLAGS) -o $@ $(C_OBJS) $(S_OBJS) $(UGPX_LIB)
 
 $(COM): $(IHX)
 	@mkdir -p "$(BIN_DIR)"
