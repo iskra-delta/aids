@@ -49,6 +49,11 @@
 #define KEY_S     8
 #define KEY_QUIT  9
 
+#define ESC_NONE    0
+#define ESC_STARTED 1
+#define ESC_CSI     2
+#define ESC_WAIT_FRAMES 8
+
 #define SCREEN_W 1024
 #define SCREEN_H 512
 #define AST_MARGIN_X 20
@@ -575,14 +580,49 @@ static uint8_t append_u16(char *buf, uint8_t pos, uint16_t value) {
 
 /* ---------- input ---------- */
 
+static uint8_t key_escape_state;
+static uint8_t key_escape_wait;
+
 static int read_key(void) {
     uint8_t c = bdos(C_RAWIO, 0xFF);
+
+    if (c == 0) {
+        if (key_escape_state != ESC_NONE && key_escape_wait > 0) {
+            --key_escape_wait;
+            if (key_escape_wait == 0)
+                key_escape_state = ESC_NONE;
+        }
+        return KEY_NONE;
+    }
+
+    if (key_escape_state != ESC_NONE) {
+        if (key_escape_state == ESC_STARTED && c == '[') {
+            key_escape_state = ESC_CSI;
+            key_escape_wait = ESC_WAIT_FRAMES;
+            return KEY_NONE;
+        }
+
+        key_escape_state = ESC_NONE;
+        key_escape_wait = 0;
+        if (c == 'A') return KEY_UP;
+        if (c == 'B') return KEY_DOWN;
+        if (c == 'C') return KEY_RIGHT;
+        if (c == 'D') return KEY_LEFT;
+        return KEY_NONE;
+    }
+
+    if (c == 27) {
+        key_escape_state = ESC_STARTED;
+        key_escape_wait = ESC_WAIT_FRAMES;
+        return KEY_NONE;
+    }
+
     if (c == 'a' || c == 'A') return KEY_LEFT;
     if (c == 'd' || c == 'D') return KEY_RIGHT;
     if (c == 'w' || c == 'W') return KEY_W;
     if (c == ' ')              return KEY_SPACE;
     if (c == '\r' || c == '\n') return KEY_ENTER;
-    if (c == 'q' || c == 'Q' || c == 27) return KEY_QUIT;
+    if (c == 'q' || c == 'Q' || c == 3) return KEY_QUIT;
     return KEY_NONE;
 }
 
@@ -1041,7 +1081,7 @@ static void draw_title_page(void) {
     coord x = (coord)((SCREEN_W - KAMENJE_LOGO_W) >> 1);
     coord y = 56;
     draw_kamenje_logo(x, y);
-    draw_centered("PRITISNITE ENTER ZA START, Q ZA IZHOD.",
+    draw_centered("PRITISNITE ENTER ZA START, Q/CTRL+C ZA IZHOD.",
                   (coord)(y + KAMENJE_LOGO_H + 24));
 }
 

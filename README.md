@@ -19,15 +19,15 @@ It is written in C for Z80/CP/M, uses UGPX graphics, and builds into both a
 ### In menus
 
 - `Enter` - start a new game
-- `Q` or `Esc` - quit
+- `Q` or `Ctrl+C` - quit
 
 ### In game
 
-- `A` - rotate left
-- `D` - rotate right
-- `W` - thrust
+- `A` or `Left arrow` - rotate left
+- `D` or `Right arrow` - rotate right
+- `W` or `Up arrow` - thrust
 - `Space` or `Enter` - fire
-- `Q` or `Esc` - quit
+- `Q` or `Ctrl+C` - quit
 
 ## Gameplay
 
